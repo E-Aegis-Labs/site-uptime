@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Monitor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 5px;
+        }
+        #siteList {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .site-card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            position: relative;
+        }
+        .status-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .up { background-color: #4CAF50; }
+        .down { background-color: #F44336; }
+        .unknown { background-color: #9E9E9E; }
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #F44336;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Site Monitor</h1>
+    <form id="addSiteForm">
+        <input type="text" id="siteUrl" placeholder="Enter site URL or IP" required>
+        <input type="email" id="ownerEmail" placeholder="Enter owner's email" required>
+        <button type="submit">Add Site</button>
+    </form>
+    <div id="siteList"></div>
+
+    <script>
+        const form = document.getElementById('addSiteForm');
+        const siteList = document.getElementById('siteList');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = document.getElementById('siteUrl').value;
+            const ownerEmail = document.getElementById('ownerEmail').value;
+            
+            try {
+                const response = await axios.post('/add-site', { url, ownerEmail });
+                if (response.data.success) {
+                    form.reset();
+                    updateSiteList();
+                } else {
+                    console.error('Failed to add site');
+                }
+            } catch (error) {
+                console.error('Error adding site:', error);
+            }
+        });
+
+        function createStatusSVG(status) {
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '20');
+            svg.setAttribute('height', '20');
+            svg.setAttribute('viewBox', '0 0 20 20');
+
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', '10');
+            circle.setAttribute('cy', '10');
+            circle.setAttribute('r', '8');
+            circle.setAttribute('fill', status === 'up' ? '#4CAF50' : status === 'down' ? '#F44336' : '#9E9E9E');
+
+            if (status === 'up' || status === 'down') {
+                circle.innerHTML = `
+                    <animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite" />
+                `;
+            }
+
+            svg.appendChild(circle);
+            return svg;
+        }
+
+        async function deleteSite(id) {
+            try {
+                const response = await axios.delete(`/delete-site/${id}`);
+                if (response.data.success) {
+                    console.log(`Site with id ${id} deleted successfully`);
+                    updateSiteList();
+                } else {
+                    console.error('Failed to delete site');
+                }
+            } catch (error) {
+                console.error('Error deleting site:', error);
+            }
+        }
+
+        async function updateSiteList() {
+            try {
+                const response = await axios.get('/sites');
+                const sites = response.data;
+                siteList.innerHTML = '';
+                
+                sites.forEach(site => {
+                    const card = document.createElement('div');
+                    card.className = 'site-card';
+                    card.innerHTML = `
+                        <strong>${site.url}</strong><br>
+                        Status: ${site.status}
+                        <button class="delete-btn" onclick="deleteSite('${site.id}')">×</button>
+                    `;
+                    card.appendChild(createStatusSVG(site.status));
+                    siteList.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Error fetching sites:', error);
+            }
+        }
+
+        // Initial update and periodic refresh
+        updateSiteList();
+        setInterval(updateSiteList, 60000); // Refresh every minute
+    </script>
+</body>
+</html>

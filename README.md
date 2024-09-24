@@ -49,8 +49,6 @@ npm install express body-parser nodemailer axios
 7. Run the application:
 
 
-node app.js
-```
 
 8. Open a browser and navigate to `http://localhost:3000` to access the Site Monitor GUI.
 

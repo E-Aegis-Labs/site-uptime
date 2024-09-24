@@ -62,6 +62,5 @@ npm install express body-parser nodemailer axios
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-```
 
 This README file includes all the necessary information for setting up and running the application. Let me know if you'd like to make any adjustments!

@@ -31,7 +31,6 @@ npm init -y
 
 
 npm install express body-parser nodemailer axios
-```
 
 4. Create the main application file:
 
@@ -49,7 +48,7 @@ npm install express body-parser nodemailer axios
 
 7. Run the application:
 
-```bash
+
 node app.js
 ```
 
